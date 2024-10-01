@@ -1,0 +1,156 @@
+#include <stdio.h>
+#include <string.h>
+#define MAX_NOME 500
+#define CID 5
+
+//estrutura que contem os dados dos pacientes
+typedef struct 
+{
+    char nome[MAX_NOME];
+    char cid[CID];
+    int crm;
+    char doenca[MAX_NOME];
+    char medico[MAX_NOME];
+} pacientes;
+
+//registra cada paciente
+void registrar(pacientes paciente[], int registrados){
+    char nomeaux[MAX_NOME];
+    char cidaux[CID];
+    int crmaux;
+    scanf("%s ", nomeaux);
+    scanf("%s", cidaux);
+    scanf("%d", &crmaux);
+    strcpy(paciente[registrados].nome, nomeaux);
+    strcpy(paciente[registrados].cid, cidaux);
+    paciente[registrados].crm = crmaux;
+}
+
+//'remove' um paciente da lista(torna seu crm = 0)
+void remover(pacientes paciente[], int registrados) {
+    char rmnome[MAX_NOME];
+    int i;
+    scanf("%s", rmnome);
+    for (i = 0; i <= registrados; i++){
+        if(strcmp(paciente[i].nome, rmnome) == 0){
+            paciente[i].crm = 0;
+            break;
+        }
+    }
+}
+
+//permiti alterar o crm de um paciente
+void alterar(pacientes paciente[], int registrados){
+    char altnome[MAX_NOME];
+    char altcid[CID];
+    scanf("%s", altnome);
+    scanf("%s", altcid);
+
+    int i;
+    for (i = 0; i < registrados; i++){
+        if(strcmp(altnome, paciente[i].nome) == 0){
+            strncpy(paciente[i].cid, altcid, CID -1);
+            paciente[i].cid[CID - 1] = '\0';
+        }
+    }
+}
+
+//chamada ao fechar o programna, organiza as consultas realizadas naquele dia
+void fechar(pacientes paciente[], int registrados){
+
+    FILE *arquivo = fopen("dados/doencas.txt", "r");
+        if (arquivo == NULL) {
+            printf("Erro ao abrir o arquivo.\n");
+            return;
+        }
+
+    char linha[CID+ MAX_NOME]; // Variável para armazenar cada linha do arquivo
+    char cid_temp[CID];
+    char doenca_temp[MAX_NOME];
+    
+    while (fgets(linha, sizeof(linha), arquivo) != NULL) {
+        // Separa a linha em CID e a descrição da doença
+        sscanf(linha, "%3s %[^\n]", cid_temp, doenca_temp);
+
+        // Verifica se o CID lido corresponde ao de algum paciente
+        for (int i = 0; i < registrados; i++) {
+            if (strcmp(paciente[i].cid, cid_temp) == 0) {
+                // Copia a descrição da doença para a estrutura do paciente
+                strncpy(paciente[i].doenca, doenca_temp, MAX_NOME);
+            }
+        }
+    }
+
+    fclose(arquivo);
+
+    FILE *arquivo2 = fopen("dados/medicos.txt", "r");
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo.\n");
+        return;
+    }
+
+    char linha2[MAX_NOME + 10]; // Buffer para armazenar cada linha do arquivo
+    int crm_temp;
+    char nome_temp[MAX_NOME];
+    
+    while (fgets(linha2, sizeof(linha2), arquivo2) != NULL) {
+        // Separa a linha em CRM e o nome do médico
+        if (sscanf(linha2, "%d %[^\n]", &crm_temp, nome_temp) == 2) {
+            // Verifica se o CRM lido corresponde ao de algum médico
+            for (int i = 0; i < registrados; i++) {
+                if (paciente[i].crm == crm_temp) {
+                    // Copia o nome do médico para a estrutura
+                    strncpy(paciente[i].medico, nome_temp, MAX_NOME - 1);
+                    paciente[i].medico[MAX_NOME - 1] = '\0'; // Garante o terminador nulo
+                }
+            }
+        }
+    }
+
+    fclose(arquivo2);
+}
+
+void impressao(pacientes paciente[], int registros){
+    int i;
+    for (i = 0; i < registros; i++){
+        if (paciente[i].crm != 0){
+            printf("%s atendido por %s: %s\n", paciente[i].nome, paciente[i].medico, paciente[i].doenca);
+        }
+    }
+}
+
+int main() {
+    char entrada[9], operacao[15];
+    int n;
+    int registrados = 0;
+
+    scanf("%s", entrada);
+
+    if(strcmp(entrada, "abrir") == 0 ){
+        scanf("%d", &n);
+
+    if(n<51){
+        pacientes paciente[100];
+
+    do {
+        scanf("%s", operacao);
+        if(strcmp(operacao, "registrar") == 0){
+            registrar(paciente, registrados);
+            registrados++;
+        }
+        else if(strcmp(operacao, "remover") == 0){
+            remover(paciente, registrados);
+        }
+        else if(strcmp(operacao, "alterar") == 0){
+            alterar(paciente, registrados);
+        }
+        else if(strcmp(operacao, "fechar") == 0){
+            fechar(paciente, registrados);
+        }
+    } while (strcmp(operacao, "fechar") != 0);
+    
+    impressao(paciente, registrados);
+    }
+    }
+    return 0;
+}
